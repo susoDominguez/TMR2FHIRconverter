@@ -2,7 +2,7 @@
 
 const { assert } = require("@sindresorhus/is");
 
-//TODO: entries array to string or JSON
+
 function Card(options = {}) {
   const {
     uuid = "CIG-00000000000000",
