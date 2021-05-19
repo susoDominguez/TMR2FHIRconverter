@@ -1,6 +1,6 @@
 "use strict";
 
-const { assert } = require("@sindresorhus/is");
+//const { assert } = require("@sindresorhus/is");
 
 
 function Card(options = {}) {
