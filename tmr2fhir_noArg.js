@@ -859,11 +859,11 @@ class FhirCarePlan {
         status: "active",
         intent: "plan",
         title: this._title,
-        subject: {
-          reference: this._patient
-        },
-      activity: this._activityList
-    }
+      },
+      subject: {
+        reference: this._patient,
+      },
+      activity: this._activityList,
     };
   }
 }
