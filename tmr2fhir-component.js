@@ -804,9 +804,9 @@ class FhirDetectedIssue {
         code: {
           coding: this._codingList,
         },
-      },
       implicated: this._implicatedList,
-      mitigation: this._mitigationList,
+      mitigation: this._mitigationList
+    }
     };
   }
 }
@@ -834,7 +834,7 @@ class FhirCarePlan {
     let resultArr;
 
     if (!Array.isArray(entryFhirList) || !Array.isArray(urlList))
-      throw Error("One parameter is not an array as expected in FhirCarePLan.");
+      throw Error("One parameter is not an array as expected in FhirCarePlan");
 
     resultArr = urlList.map((urlRef) => {
       let id = String(urlRef).slice(26);
@@ -844,7 +844,7 @@ class FhirCarePlan {
       let identifier = entryObj.resource.resourceType + "/" + id;
 
       //return fullURl
-      return { ref: identifier };
+      return { reference: identifier };
     });
 
     return resultArr;
