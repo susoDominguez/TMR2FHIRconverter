@@ -329,9 +329,9 @@ function createCards(
   { groupA, groupB, groupC, groupD },
   copdGroup_snomedCode
 ) {
-  logger.info(
+  /*logger.info(
     `copdGroup_snomedCode is ${JSON.stringify(copdGroup_snomedCode)}`
-  );
+  );*/
 
   //Object with arguments required to create a new Card object
   const cardParams = {
@@ -381,18 +381,18 @@ function createCards(
     //create objects for part list:
     //1. Code object
     let temp = new CopdGroupCoding(groupCode, true).toJSON();
-    logger.info(`CopdGroupCoding is ${JSON.stringify(temp)}`);
-    logger.info(`nameCode is ${JSON.stringify(nameCode)}`);
+ //   logger.info(`CopdGroupCoding is ${JSON.stringify(temp)}`);
+//    logger.info(`nameCode is ${JSON.stringify(nameCode)}`);
     part.push(temp);
 
     //2. Medication preferences
     for (let arrIndx = 0; arrIndx < medsArrOfArrs.length; arrIndx++) {
       let medsArr = medsArrOfArrs[arrIndx];
-      logger.info(` arrIndx is ${JSON.stringify(arrIndx)}`);
+     // logger.info(` arrIndx is ${JSON.stringify(arrIndx)}`);
       let temp = new Medication_preference((arrIndx + 1), medsArr).toJSON();
-      logger.info(` Medication preferences is ${JSON.stringify(temp)}`);
+      //logger.info(` Medication preferences is ${JSON.stringify(temp)}`);
       part.push(temp);
-      logger.info(` part is ${JSON.stringify(part)}`);
+     // logger.info(` part is ${JSON.stringify(part)}`);
     }
 
     //final object containing result
