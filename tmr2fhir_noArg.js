@@ -1,5 +1,7 @@
 "use strict";
 
+const logger = require("../../config/winston");
+
 //const { assert } = require("@sindresorhus/is");
 
 
@@ -7,11 +9,11 @@ function Card(options = {}) {
   const {
     uuid = "CIG-00000000000000",
     patient = "dummy",
-    summary = "Personalised COPD decision support",
-    labelSource = "GOLD 2017 COPD Guideline",
-    labelSuggestions = "COPD care plan decision support",
+    summary = "Personalised knowledge-based decision support in patients with multimorbidity",
+    labelSource = "TMR-based clinical guidelines",
+    labelSuggestions = "care plan decision support",
     actionDescription = "Update COPD care plan",
-    resourceId = "COPDbundle",
+    resourceId = "bundle",
     birthDate = "",
   } = options; //default values for COPD
 
@@ -815,28 +817,29 @@ class FhirDetectedIssue {
  * It takes index of plan to add to ID, a title for the plan, the list of TMR Rec Ids which are part of the plan and the FHIR entries corresponding to the converted TMR components.
  */
 class FhirCarePlan {
-  constructor(planIndex, title, patient, requestUrlList, fhirEntries) {
+
+  constructor(planIndex, title, patient, recIdList, fhirEntries) {
     this._fullUrl = uriPrefix + carePlan_ID + "/" + carePlan_ID + planIndex;
     this._id = carePlan_ID + planIndex;
     this._title = title;
     this._patient = patient;
-    this._activityList = this.addRequestRef(fhirEntries, requestUrlList);
+    this._activityList = this.addRequestRef(fhirEntries, recIdList);
   }
 
   /**
    * Conver TMR URIs into FHIR URLs
    * @param {Array} entryFhirList list of FHIR entries already added to the instance of the response schema
-   * @param {Array} urlList list of TMR recommendations as given by the resolution engine
+   * @param {Array} recIdList list of TMR recommendation Ids
    *
    * @returns {string} resource unique URL
    */
-  addRequestRef(entryFhirList, urlList) {
+  addRequestRef(entryFhirList, recIdList) {
     let resultArr;
+    logger.info("aqui addRequestRef")
+    if (!Array.isArray(entryFhirList) || !Array.isArray(recIdList))
+      throw Error({message: "One parameter is not an array as expected in FhirCarePLan."});
 
-    if (!Array.isArray(entryFhirList) || !Array.isArray(urlList))
-      throw Error("One parameter is not an array as expected in FhirCarePLan.");
-
-    resultArr = urlList.map((urlRef) => {
+    resultArr = recIdList.map((urlRef) => {
       let id = String(urlRef).slice(26);
       //find entry object with same id
       let entryObj = entryFhirList.find((entry) => entry.resource.id == id);
@@ -844,7 +847,7 @@ class FhirCarePlan {
       let identifier = entryObj.resource.resourceType + "/" + id;
 
       //return fullURl
-      return { ref: identifier };
+      return { reference: identifier };
     });
 
     return resultArr;
@@ -1239,42 +1242,26 @@ class CarePlanResources {
     this._carePlanArr = [];
   }
   add() {
-    return (title, patient, extensions, fhirReqEntries) => {
-      if (!Array.isArray(extensions))
-        throw new Error(
-          "parameter 'extensions' is not an Array as expected in CarePlanResources."
-        );
+    return (title, patient, recIdList, fhirReqEntries) => {
 
       if (!Array.isArray(fhirReqEntries))
         throw new Error(
-          "parameter 'fhirReqEntries' is not an Array as expected in CarePlanResources."
+          {message: "parameter 'fhirReqEntries' is not an Array as expected in CarePlanResources."}
         );
-
-      for (let index = 0; index < extensions.length; index++) {
-        const extensionObj = extensions[index];
-
-        if (
-          "extension" in extensionObj &&
-          Array.isArray(extensionObj.extension)
-        ) {
-          let requestUrlList = extensionObj.extension.map(
-            (ext) => ext.aboutRecommendation.id
-          );
 
           this._carePlanArr.push(
             new FhirCarePlan(
-              index,
+              1,
               title,
               patient,
-              requestUrlList,
+              recIdList,
               fhirReqEntries
             )
           );
-        }
+        
       }
       return this;
     };
-  }
 }
 
 function validateInteractionsSchema(interactions) {
@@ -1361,8 +1348,10 @@ function validateRecSchema(recommendation) {
   //CB checking is done elsewhere
 }
 
-//TODO: separate into 2 taks where the second one involves MedRequests and interactions so that while interactions are found, the FHIR schema can be built
-function translateTmrToFhir(patient, tmrData) {
+
+function translateTmrToFhir(patient, cigObject
+  ) {
+  //create resources
   let condObj = new ConditionResources(new Map());
   let medReqObj = new MedicationRequestResources(new Map());
   let servReqObj = new ServiceRequestResources(new Map());
@@ -1373,13 +1362,14 @@ function translateTmrToFhir(patient, tmrData) {
   const tmrProp = ["interactions", "recommendations"];
 
   if (
-    !tmrData.guidelineGroup ||
-    !tmrProp.every((prop) => prop in tmrData.guidelineGroup)
-  )
-    throw new Error("TMR schema is not as expected.");
+    !cigObject
+    .guidelineGroup ||
+    !tmrProp.every((prop) => prop in cigObject
+    .guidelineGroup)
+  ) throw new Error("TMR schema is not as expected.");
 
-  const interactions = tmrData.guidelineGroup.interactions,
-    recs = tmrData.guidelineGroup.recommendations;
+  const interactions = cigObject.guidelineGroup.interactions,
+        recs = cigObject.guidelineGroup.recommendations;
 
   //validate interactions schema
   validateInteractionsSchema(interactions);
@@ -1449,10 +1439,10 @@ function translateTmrToFhir(patient, tmrData) {
  * @param {string} patient patient identifier
  * @param {string} cigId uuid
  * @param {object} tmrObject object containing TMR terms and identified interactions
- * @param {array} extensions list of care plans resulting from the argumentation engine
  * @returns object
  */
-function createCards(patient, cigId, tmrObject, extensions) {
+function createCards(patient, cigId, tmrObject) {
+
   // Object with arguments required to create a new Card object
   const cardParams = {
     uuid: undefined,
@@ -1478,8 +1468,11 @@ function createCards(patient, cigId, tmrObject, extensions) {
     tmrObject
   );
 
+  //extract all recs ids from json structure
+  let recIdList = tmrObject.guidelineGroup.recommendations.map( (rec) => { return rec.id} );
+  
   //add care plans
-  let carePlanList = createCarePlanList('personalised COPD care plan', card.patient, extensions, requestList);
+  let carePlanList = createCarePlanList('personalised COPD care plan', card.patient, recIdList, requestList);
   //concat entries
   let entryList = entry.concat(carePlanList);
   //
@@ -1488,10 +1481,10 @@ function createCards(patient, cigId, tmrObject, extensions) {
   return card.toJSON();
 }
 
-function createCarePlanList(title, patient, extensions, fhirEntries) {
+function createCarePlanList(title, patient, recIdList, fhirEntries) {
   let planObj = new CarePlanResources();
-  let addCarePlans = planObj.add();
-  addCarePlans(title, "Patient/" + patient, extensions, fhirEntries);
+  let addCarePlans = planObj.add(); 
+  addCarePlans(title, "Patient/" + patient, recIdList, fhirEntries);
 
   return JSON.parse(JSON.stringify(planObj._carePlanArr));
 }
