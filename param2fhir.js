@@ -215,6 +215,8 @@ const medFhirId_map = new Map([
   ["Lama", "DrugTLama"],
   ["LabaLama", "DrugCatLabaLama"],
   ["LabaLamaIcs", "DrugCatLabaLamaIcs"],
+  ["LamaLaba", "DrugCatLabaLama"],
+  ["LamaLabaIcs", "DrugCatLabaLamaIcs"],
   ["LabaIcs", "DrugCatLabaIcs"],
   ["Ics", "DrugTIcs"],
 ]);
@@ -397,7 +399,7 @@ function createCards(
 
     //final object containing result
     let tempObj = { 'name': nameCode, 'part': part };
-    logger.info(`tempObj is ${JSON.stringify(tempObj)}`);
+    //logger.info(`tempObj is ${JSON.stringify(tempObj)}`);
 
     //add final result to card
     card._parameters.push(tempObj);
