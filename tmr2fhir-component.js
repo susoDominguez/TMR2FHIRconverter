@@ -615,7 +615,7 @@ class FhirMedicationRequest {
     this._cigUri = String(derivedFrom);
     this._patient = patient;
     this._medication = med_ID + "/" + String(careActionType.id).slice(26);
-    this._doNotRecommend = String(suggestion) === "nonrecommend";
+    this._doNotRecommend = String(suggestion) === "nonRecommend";
     //create list of Conditions and ForecastEffects -both have the same number of resources
 
     //validate schema
