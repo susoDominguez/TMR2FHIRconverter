@@ -88,15 +88,6 @@ const requestMap = new Map([
   [2, medReq_ID],
 ]); //[2,ImmunizationRecommendation]
 
-const altInter = "alternative",
-  contrInter = "contradiction",
-  repairInter = "repairable",
-  repetInter = "repetition";
-
-//mitigation codes for contradiction
-const contrMitStopped = "13",
-  contrMitAlt = "ALTHRPYMIT",
-  contrMitRep = "INVEFFCTMIT";
 
 //validating parameters
 //this one is when parametr is undefined the default value is an error object
@@ -111,7 +102,7 @@ const required = (name, className) => {
  */
 function getSituations([
   sitA = required("situationA", this.constructor.name),
-  sitB = required("situationA", this.constructor.name),
+  sitB = required("situationB", this.constructor.name),
 ]) {
   //assert they are objects
   //assert.plainObject(sitA);
@@ -1130,14 +1121,24 @@ class CarePlanResources {
           "extension" in extensionObj &&
           Array.isArray(extensionObj.extension)
         ) {
+          //extend title with label of COPD drug
+          let titleExtension = title;
+
           let requestUrlList = extensionObj.extension.map(
-            (ext) => ext.aboutRecommendation.id
+            (ext) => { 
+              //get url
+              let url = ext.aboutRecommendation.id;
+              //if url exists in Map then this is the main recommendation. Add to title
+              if(recsMap.has(url)) titleExtension += recsMap.get(url) + " ";
+              //add url to list
+              return  url;
+            }
           );
 
           this._carePlanArr.push(
             new FhirCarePlan(
               index,
-              title,
+              titleExtension,
               patient,
               requestUrlList,
               fhirReqEntries
@@ -1352,7 +1353,7 @@ function createCards(patient, cigId, tmrObject, extensions) {
   );
 
   //add care plans
-  let carePlanList = createCarePlanList('personalised COPD care plan', card.patient, extensions, requestList);
+  let carePlanList = createCarePlanList('suggested treatments: ', card.patient, extensions, requestList);
   //concat entries
   let entryList = entry.concat(carePlanList);
   //
