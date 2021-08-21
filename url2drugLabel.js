@@ -30,7 +30,6 @@ exports.recsMap = new Map([
     ["http://anonymous.org/data/RecCOPD-SabaSamaDecModPropAlsShould", "SABA + SAMA"],
     ["http://anonymous.org/data/RecCOPD-LabaIcsDecModPropAlsShould", "LABA + ICS"],
     ["http://anonymous.org/data/RecCOPD-LabaLamaIcsDecModPropAlsShould", "LABA + LAMA + ICS"],
-    ["http://anonymous.org/data/RecCOPD-LabaLamaIncPropRskHypoShouldnot", "LABA + LAMA"],
     ["http://anonymous.org/data/RecCOPD-LamaDecSevPropAlsShould", "LAMA"],
     ["http://anonymous.org/data/RecCOPD-LabaLamaDecSevPropAlsShould", "LABA + LAMA"],
     ["http://anonymous.org/data/RecCOPD-LabaIcsDecSevPropAlsShould", "LABA + ICS"],
