@@ -1,5 +1,5 @@
 "use strict";
-const logger = require("../../config/winston");
+const logger = require("../config/winston");
 
 function Card(options = {}) {
   const {

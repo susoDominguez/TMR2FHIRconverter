@@ -1,6 +1,6 @@
 "use strict";
 
-const logger = require("../../config/winston");
+const logger = require("../config/winston");
 
 //const { assert } = require("@sindresorhus/is");
 
