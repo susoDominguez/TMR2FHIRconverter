@@ -835,7 +835,7 @@ class FhirCarePlan {
    */
   addRequestRef(entryFhirList, recIdList) {
     let resultArr;
-    logger.info("aqui addRequestRef")
+ 
     if (!Array.isArray(entryFhirList) || !Array.isArray(recIdList))
       throw Error({message: "One parameter is not an array as expected in FhirCarePLan."});
 

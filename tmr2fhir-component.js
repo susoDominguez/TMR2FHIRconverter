@@ -1,6 +1,6 @@
 "use strict";
 
-//const { assert } = require("@sindresorhus/is");
+const { recsMap, interactionCodes } = require("./url2drugLabel");
 
 
 function Card(options = {}) {
@@ -88,143 +88,6 @@ const requestMap = new Map([
   [2, medReq_ID],
 ]); //[2,ImmunizationRecommendation]
 
-const altInter = "alternative",
-  contrInter = "contradiction",
-  repairInter = "repairable",
-  repetInter = "repetition";
-
-//mitigation codes for contradiction
-const contrMitStopped = "13",
-  contrMitAlt = "ALTHRPYMIT",
-  contrMitRep = "INVEFFCTMIT";
-
-//interaction types
-const interactionCodes = new Map([
-  [
-    altInter,
-    {
-      interaction: [
-        {
-          system: "http://anonymous.org/CodeSystem/interactions",
-          code: "ALTHRPY",
-          display: "Alternative Therapies With Same Intended Effect"
-        }
-      ],
-      mitigation: [
-        {
-          action: {
-            coding: [
-              {
-                system: "http://anonymous.org/CodeSystem/interactions",
-                code: "NOTREQ",
-                display: "Mitigation Not Required",
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ],
-  [
-    contrInter,
-    {
-      interaction: [
-        {
-          system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-          code: "DACT",
-          display: "Drug Action Detected Issue"
-        }
-      ],
-      mitigation: [
-        {
-          action: {
-            coding: [
-              {
-                system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-                code: contrMitStopped,
-                display: "Stopped Concurrent Therapy"
-              }
-            ]
-          }
-        }/*,
-        {
-          action: {
-            coding: [
-              {
-                system: "http://terminology.hl7.org/CodeSystem/interactions",
-                code: contrMitAlt,
-                display:
-                  "Selected Alternative Therapy With Same Intended Effect"
-              }
-            ]
-          }
-        },
-        {
-          action: {
-            coding: [
-              {
-                system: "http://terminology.hl7.org/CodeSystem/interactions",
-                code: contrMitRep,
-                display:
-                  "Adverse Effect Repaired By Drug Action with Inverse Effect"
-              }
-            ]
-          }
-        } */
-      ]
-    }
-  ],
-  [
-    repetInter,
-    {
-      interaction: [
-        {
-          system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-          code: "DUPTHPY",
-          display: "Duplicate Therapy Alert"
-        }
-      ],
-      mitigation: [
-        {
-          action: {
-            coding: [
-              {
-                system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-                code: "13",
-                display: "Stopped Concurrent Therapy"
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ],
-  [
-    repairInter,
-    {
-      interaction: [
-        {
-          system: "http://anonymous.org/codeSystem/interactions",
-          code: "INVEFFCT",
-          display: "Adverse and therapeutic therapies with inverse effect"
-        }
-      ],
-      mitigation: [
-        {
-          action: {
-            coding: [
-              {
-                system: "http://anonymous.org/codeSystem/interactions",
-                code: "NOTREQ",
-                display: "Mitigation Not Required"
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ]
-]);
 
 //validating parameters
 //this one is when parametr is undefined the default value is an error object
@@ -239,7 +102,7 @@ const required = (name, className) => {
  */
 function getSituations([
   sitA = required("situationA", this.constructor.name),
-  sitB = required("situationA", this.constructor.name),
+  sitB = required("situationB", this.constructor.name),
 ]) {
   //assert they are objects
   //assert.plainObject(sitA);
@@ -615,7 +478,7 @@ class FhirMedicationRequest {
     this._cigUri = String(derivedFrom);
     this._patient = patient;
     this._medication = med_ID + "/" + String(careActionType.id).slice(26);
-    this._doNotRecommend = String(suggestion) === "nonrecommend";
+    this._doNotRecommend = String(suggestion) === "nonRecommend";
     //create list of Conditions and ForecastEffects -both have the same number of resources
 
     //validate schema
@@ -815,6 +678,7 @@ class FhirDetectedIssue {
  * It takes index of plan to add to ID, a title for the plan, the list of TMR Rec Ids which are part of the plan and the FHIR entries corresponding to the converted TMR components.
  */
 class FhirCarePlan {
+  
   constructor(planIndex, title, patient, requestUrlList, fhirEntries) {
     this._fullUrl = uriPrefix + carePlan_ID + "/" + carePlan_ID + planIndex;
     this._id = carePlan_ID + planIndex;
@@ -1257,14 +1121,24 @@ class CarePlanResources {
           "extension" in extensionObj &&
           Array.isArray(extensionObj.extension)
         ) {
+          //extend title with label of COPD drug
+          let titleExtension = title;
+
           let requestUrlList = extensionObj.extension.map(
-            (ext) => ext.aboutRecommendation.id
+            (ext) => { 
+              //get url
+              let url = ext.aboutRecommendation.id;
+              //if url exists in Map then this is the main recommendation. Add to title
+              if(recsMap.has(url)) titleExtension += recsMap.get(url) + " ";
+              //add url to list
+              return  url;
+            }
           );
 
           this._carePlanArr.push(
             new FhirCarePlan(
               index,
-              title,
+              titleExtension,
               patient,
               requestUrlList,
               fhirReqEntries
@@ -1479,7 +1353,7 @@ function createCards(patient, cigId, tmrObject, extensions) {
   );
 
   //add care plans
-  let carePlanList = createCarePlanList('personalised COPD care plan', card.patient, extensions, requestList);
+  let carePlanList = createCarePlanList('suggested treatments: ', card.patient, extensions, requestList);
   //concat entries
   let entryList = entry.concat(carePlanList);
   //
