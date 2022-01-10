@@ -1,5 +1,5 @@
 "use strict";
-const logger = require("../config/winston");
+const logger = require("../../config/winston");
 
 function Card(options = {}) {
   const {
@@ -319,17 +319,12 @@ class Medication_preference {
 Medication_preference.prototype.toString = toString;
 
 /**
- *
- * @param {string} patient patient identifier
- * @param {string} cigId uuid
- * @param {object} { groupA: ListA, groupB: ListB, groupC:ListC, groupD:ListD} containing list of lists of medication preferences for each COPD group
- * @param {integer} copdGroup_snomedCode code denoting the assessed COPD group
- * @returns object JSON card object
+ * 
+ * @param {object} param0 object containing patient and COPD group data
+ * @returns CDS Card
  */
 function createCards(
-  patient,
-  { groupA, groupB, groupC, groupD },
-  copdGroup_snomedCode
+  { patient, groupA, groupB, groupC, groupD, assessedCopdGroup_code }
 ) {
   /*logger.info(
     `copdGroup_snomedCode is ${JSON.stringify(copdGroup_snomedCode)}`
@@ -365,7 +360,7 @@ function createCards(
   const nameCodeArr = ["copdGroupA", "copdGroupB", "copdGroupC", "copdGroupD"];
 
   //add result for assessed copd stage
-  let tempResult = new CopdGroupCoding(copdGroup_snomedCode, false).toJSON();
+  let tempResult = new CopdGroupCoding(assessedCopdGroup_code, false).toJSON();
 
   card._parameters.push(tempResult);
 
@@ -412,4 +407,4 @@ function createCards(
  * creates a CDS card and adds medication preferences for each COPD group
  * @returns object
  */
-exports.setCdsCard_medPrefs = createCards;
+exports.setCdsCardsFrom_copdAssess = createCards;

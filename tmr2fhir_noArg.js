@@ -1,8 +1,6 @@
 "use strict";
 
-const logger = require("../config/winston");
-
-//const { assert } = require("@sindresorhus/is");
+const logger = require("../../config/winston");
 
 
 function Card(options = {}) {
@@ -1348,8 +1346,13 @@ function validateRecSchema(recommendation) {
   //CB checking is done elsewhere
 }
 
-
-function translateTmrToFhir(patient, cigObject
+/**
+ * 
+ * @param {string} patient patient Id
+ * @param {object} aggregatedForm JSON object containing merged CIG Id, recommendations and identified interactions
+ * @returns 
+ */
+function translateTmrToFhir(patient, aggregatedForm
   ) {
   //create resources
   let condObj = new ConditionResources(new Map());
@@ -1362,14 +1365,14 @@ function translateTmrToFhir(patient, cigObject
   const tmrProp = ["interactions", "recommendations"];
 
   if (
-    !cigObject
+    !aggregatedForm
     .guidelineGroup ||
-    !tmrProp.every((prop) => prop in cigObject
+    !tmrProp.every((prop) => prop in aggregatedForm
     .guidelineGroup)
   ) throw new Error("TMR schema is not as expected.");
 
-  const interactions = cigObject.guidelineGroup.interactions,
-        recs = cigObject.guidelineGroup.recommendations;
+  const interactions = aggregatedForm.guidelineGroup.interactions,
+        recs = aggregatedForm.guidelineGroup.recommendations;
 
   //validate interactions schema
   validateInteractionsSchema(interactions);
@@ -1437,11 +1440,12 @@ function translateTmrToFhir(patient, cigObject
 /**
  * 
  * @param {string} patient patient identifier
- * @param {string} cigId uuid
+ * @param {string} cigId uuid CIG label
+ * @param {string} encounterId uuid encounter
  * @param {object} tmrObject object containing TMR terms and identified interactions
  * @returns object
  */
-function createCards(patient, cigId, tmrObject) {
+function createCards({patient, encounterId, cigId, aggregatedForm}) {
 
   // Object with arguments required to create a new Card object
   const cardParams = {
@@ -1454,6 +1458,8 @@ function createCards(patient, cigId, tmrObject) {
     resourceId: undefined,
   };
 
+  //logger.info(`AGGREGATED FORM IN CREATED CARDS IS ${JSON.stringify(aggregatedForm)}`);
+
   //those not defined have a default value
   cardParams.patient = patient;
   cardParams.birthDate = '';
@@ -1465,11 +1471,11 @@ function createCards(patient, cigId, tmrObject) {
   //convert TMR 2 FHIR entries
   const { entry, requestList } = translateTmrToFhir(
     "Patient/" + card.patient,
-    tmrObject
+    aggregatedForm
   );
 
   //extract all recs ids from json structure
-  let recIdList = tmrObject.guidelineGroup.recommendations.map( (rec) => { return rec.id} );
+  let recIdList = aggregatedForm.guidelineGroup.recommendations.map( (rec) => { return rec.id} );
   
   //add care plans
   let carePlanList = createCarePlanList('personalised COPD care plan', card.patient, recIdList, requestList);
@@ -1493,4 +1499,4 @@ function createCarePlanList(title, patient, recIdList, fhirEntries) {
  * creates a CDS card and add resources from the given TMR data
  * @returns object
  */
-exports.setCdsCard = createCards;
+exports.setCdsCardFromTmr = createCards;
