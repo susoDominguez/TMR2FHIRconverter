@@ -1440,9 +1440,9 @@ function translateTmrToFhir(patient, aggregatedForm
 /**
  * 
  * @param {string} patient patient identifier
- * @param {string} cigId uuid CIG label
- * @param {string} encounterId uuid encounter
- * @param {object} tmrObject object containing TMR terms and identified interactions
+ * @param {string} encounterId uuid CIG label
+ * @param {string} cigId encounter
+ * @param {object} aggregatedForm object containing TMR terms
  * @returns object
  */
 function createCards({patient, encounterId, cigId, aggregatedForm}) {

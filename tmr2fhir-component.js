@@ -1326,11 +1326,12 @@ function translateTmrToFhir(patient, tmrData) {
  * @param {array} extensions list of care plans resulting from the argumentation engine
  * @returns object
  */
-function createCards(patient, cigId, tmrObject, extensions) {
+function createCards(patient, encounterId=null, cigId, tmrObject, extensions) {
   // Object with arguments required to create a new Card object
   const cardParams = {
     uuid: undefined,
     patient: undefined,
+    encounter: encounterId,
     summary: undefined,
     labelSource: undefined,
     labelSuggestions: undefined,
