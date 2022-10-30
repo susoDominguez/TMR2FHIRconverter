@@ -1322,11 +1322,11 @@ function translateTmrToFhir(patient, tmrData) {
  * 
  * @param {string} patient patient identifier
  * @param {string} cigId uuid
- * @param {object} tmrObject object containing TMR terms and identified interactions
+ * @param {object} aggregatedForm object containing TMR terms and identified interactions
  * @param {array} extensions list of care plans resulting from the argumentation engine
  * @returns object
  */
-function createCards(patient, encounterId=null, cigId, tmrObject, extensions) {
+function createCards(patientId='dummy', encounterId='dummy', cigId, aggregatedForm, extensions) {
   // Object with arguments required to create a new Card object
   const cardParams = {
     uuid: undefined,
@@ -1340,7 +1340,7 @@ function createCards(patient, encounterId=null, cigId, tmrObject, extensions) {
   };
 
   //those not defined have a default value
-  cardParams.patient = patient;
+  cardParams.patient = patientId;
   cardParams.birthDate = '';
   cardParams.uuid = cigId;
 
@@ -1350,7 +1350,7 @@ function createCards(patient, encounterId=null, cigId, tmrObject, extensions) {
   //convert TMR 2 FHIR entries
   const { entry, requestList } = translateTmrToFhir(
     "Patient/" + card.patient,
-    tmrObject
+    aggregatedForm
   );
 
   //add care plans

@@ -1499,4 +1499,4 @@ function createCarePlanList(title, patient, recIdList, fhirEntries) {
  * creates a CDS card and add resources from the given TMR data
  * @returns object
  */
-exports.setCdsCardFromTmr = createCards;
+exports.setCdsCard_NonMitigation = createCards;
