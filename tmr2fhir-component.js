@@ -1,5 +1,6 @@
 "use strict";
 
+const logger = require("../../config/winston");
 const { recsMap, interactionCodes } = require("./url2drugLabel");
 
 
@@ -1247,13 +1248,13 @@ function translateTmrToFhir(patient, tmrData) {
   const tmrProp = ["interactions", "recommendations"];
 
   if (
-    !tmrData.guidelineGroup ||
-    !tmrProp.every((prop) => prop in tmrData.guidelineGroup)
+    !tmrData.hasOwnProperty('guidelineGroup') ||
+    !tmrProp.every((prop) => prop in tmrData['guidelineGroup'])
   )
-    throw new Error("TMR schema is not as expected.");
+    throw new Error("translateTmrToFhir: TMR schema is not as expected. " + JSON.stringify(tmrData));
 
-  const interactions = tmrData.guidelineGroup.interactions,
-    recs = tmrData.guidelineGroup.recommendations;
+  const interactions = tmrData['guidelineGroup']['interactions'],
+    recs = tmrData['guidelineGroup']['recommendations'];
 
   //validate interactions schema
   validateInteractionsSchema(interactions);
